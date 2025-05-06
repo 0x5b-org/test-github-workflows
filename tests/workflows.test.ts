@@ -26,13 +26,13 @@ const workflowOns = [
 
 const { data: main } = await tokentokit.rest.git.getRef({
   owner: '0x5b-org',
-  repo: 'repository-config-testbed',
+  repo: 'test-github-workflows',
   ref: 'heads/main'
 });
 
 const branches = await tokentokit.paginate(tokentokit.rest.repos.listBranches, {
   owner: '0x5b-org',
-  repo: 'repository-config-testbed'
+  repo: 'test-github-workflows'
 });
 
 describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from: %s, to: %s)', async ([fromOn, toOn]) => {
@@ -48,7 +48,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
       if (branch) {
         await apptokit.rest.git.deleteRef({
           owner: '0x5b-org',
-          repo: 'repository-config-testbed',
+          repo: 'test-github-workflows',
           ref: `heads/${branch.name}`
         });
       }
@@ -65,7 +65,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     // Create main branch
     await tokentokit.rest.git.createRef({
       owner: '0x5b-org',
-      repo: 'repository-config-testbed',
+      repo: 'test-github-workflows',
       ref: `refs/heads/${branchPrefix}/main`,
       sha: main.object.sha
     });
@@ -76,7 +76,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     if (fromOn) {
       const { data: update } = await tokentokit.rest.repos.createOrUpdateFileContents({
         owner: '0x5b-org',
-        repo: 'repository-config-testbed',
+        repo: 'test-github-workflows',
         path: `.github/workflows/workflow.yml`,
         message: 'Add workflow to main branch',
         content: Buffer.from(JSON.stringify({
@@ -105,7 +105,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     // Create feature branch from main
     await tokentokit.rest.git.createRef({
       owner: '0x5b-org',
-      repo: 'repository-config-testbed',
+      repo: 'test-github-workflows',
       ref: `refs/heads/${branchPrefix}/feature`,
       sha: mainSha
     });
@@ -114,7 +114,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     if (toOn) {
       await tokentokit.rest.repos.createOrUpdateFileContents({
         owner: '0x5b-org',
-        repo: 'repository-config-testbed',
+        repo: 'test-github-workflows',
         path: `.github/workflows/workflow.yml`,
         message: 'Add workflow to feature branch',
         sha: updateTestMain?.content?.sha!,
@@ -140,7 +140,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
       if (fromOn) {
         await tokentokit.rest.repos.deleteFile({
           owner: '0x5b-org',
-          repo: 'repository-config-testbed',
+          repo: 'test-github-workflows',
           path: `.github/workflows/workflow.yml`,
           message: 'Delete workflow from feature branch',
           sha: updateTestMain?.content?.sha!,
@@ -150,7 +150,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
         // Create dummy file
         await tokentokit.rest.repos.createOrUpdateFileContents({
           owner: '0x5b-org',
-          repo: 'repository-config-testbed',
+          repo: 'test-github-workflows',
           path: `test_file`,
           message: 'Add dummy file to feature branch',
           content: Buffer.from('Dummy file').toString('base64'),
@@ -162,7 +162,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     // Open Pull Request
     const { data: pull } = await tokentokit.rest.pulls.create({
       owner: '0x5b-org',
-      repo: 'repository-config-testbed',
+      repo: 'test-github-workflows',
       title: `Workflows (from: ${fromOn}, to: ${toOn})`,
       head: `${branchPrefix}/feature`,
       base: `${branchPrefix}/main`
@@ -177,7 +177,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
     // Find workflow run
     const { data: workflowRuns } = await tokentokit.rest.actions.listWorkflowRuns({
       owner: '0x5b-org',
-      repo: 'repository-config-testbed',
+      repo: 'test-github-workflows',
       workflow_id: 'workflow.yml',
       head_sha: pullRequest.head.sha,
     });
@@ -203,7 +203,7 @@ describe.concurrent.for(_.product(workflowOns, workflowOns))('PR Workflow (from:
 
       const { data: logsZip } = await tokentokit.rest.actions.downloadWorkflowRunLogs({
         owner: '0x5b-org',
-        repo: 'repository-config-testbed',
+        repo: 'test-github-workflows',
         run_id: workflowRun!.id
       });
 
